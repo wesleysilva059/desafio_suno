@@ -391,10 +391,8 @@ add_action( 'widgets_init', 'twentytwenty_sidebar_registration' );
  */
 function twentytwenty_block_editor_styles() {
 
-	$css_dependencies = array();
-
 	// Enqueue the editor styles.
-	wp_enqueue_style( 'twentytwenty-block-editor-styles', get_theme_file_uri( '/assets/css/editor-style-block.css' ), $css_dependencies, wp_get_theme()->get( 'Version' ), 'all' );
+	wp_enqueue_style( 'twentytwenty-block-editor-styles', get_theme_file_uri( '/assets/css/editor-style-block.css' ), array(), wp_get_theme()->get( 'Version' ), 'all' );
 	wp_style_add_data( 'twentytwenty-block-editor-styles', 'rtl', 'replace' );
 
 	// Add inline style from the Customizer.
@@ -555,6 +553,8 @@ function twentytwenty_block_editor_settings() {
 		)
 	);
 
+	add_theme_support( 'editor-styles' );
+
 	// If we have a dark background color then add support for dark editor style.
 	// We can determine if the background color is dark by checking if the text-color is white.
 	if ( '#ffffff' === strtolower( twentytwenty_get_color_for_area( 'content', 'text' ) ) ) {
@@ -701,7 +701,7 @@ function twentytwenty_get_elements_array() {
 			'accent'     => array(
 				'color'            => array( '.color-accent', '.color-accent-hover:hover', '.color-accent-hover:focus', ':root .has-accent-color', '.has-drop-cap:not(:focus):first-letter', '.wp-block-button.is-style-outline', 'a' ),
 				'border-color'     => array( 'blockquote', '.border-color-accent', '.border-color-accent-hover:hover', '.border-color-accent-hover:focus' ),
-				'background-color' => array( 'button:not(.toggle)', '.button', '.faux-button', '.wp-block-button__link', '.wp-block-file .wp-block-file__button', 'input[type="button"]', 'input[type="reset"]', 'input[type="submit"]', '.bg-accent', '.bg-accent-hover:hover', '.bg-accent-hover:focus', ':root .has-accent-background-color', '.comment-reply-link' ),
+				'background-color' => array( 'button', '.button', '.faux-button', '.wp-block-button__link', '.wp-block-file .wp-block-file__button', 'input[type="button"]', 'input[type="reset"]', 'input[type="submit"]', '.bg-accent', '.bg-accent-hover:hover', '.bg-accent-hover:focus', ':root .has-accent-background-color', '.comment-reply-link' ),
 				'fill'             => array( '.fill-children-accent', '.fill-children-accent *' ),
 			),
 			'background' => array(
@@ -757,4 +757,63 @@ function twentytwenty_get_elements_array() {
 	* @param array Array of elements
 	*/
 	return apply_filters( 'twentytwenty_get_elements_array', $elements );
+}
+
+add_action( 'init', 'create_locations' );
+
+function create_locations() {
+ $labels = array(
+    'name' => _x( 'Locais', 'taxonomy general name' ),
+    'singular_name' => _x( 'Local', 'taxonomy singular name' ),
+    'search_items' =>  __( 'Buscar Locais' ),
+    'all_items' => __( 'Todos os Locais' ),
+    'parent_item' => __( 'Local Ascendente' ),
+    'parent_item_colon' => __( 'Local Ascendente:' ),
+    'edit_item' => __( 'Editar Local' ), 
+    'update_item' => __( 'Update Local' ),
+    'add_new_item' => __( 'Adicionar Novo Local' ),
+    'new_item_name' => __( 'Novo Nome Local' ),
+  ); 	
+ 
+  register_taxonomy('location','event',array(
+    'hierarchical' => true,
+    'labels' => $labels
+  ));
+}
+
+
+// The custom function MUST be hooked to the init action hook
+add_action( 'init', 'lc_register_beneficio_post_type' );
+// A custom function that calls register_post_type
+function lc_register_beneficio_post_type() {
+  // Set various pieces of text, $labels is used inside the $args array
+  $labels = array(
+	'name'               => __( 'Benefícios' ),
+	'singular_name'      => __( 'Benefício' ),
+	'add_new'            => __( 'Adicionar Novo' ),
+	'add_new_item'       => __( 'Add New Benefício' ),
+	'edit_item'          => __( 'Edit Benefício' ),
+	'new_item'           => __( 'New Benefício' ),
+	'all_items'          => __( 'Todos os Benefícios' ),
+	'view_item'          => __( 'View Benefício' ),
+	'search_items'       => __( 'Search Benefícios' ),
+	'featured_image'     => 'Poster',
+	'set_featured_image' => 'Add Poster'
+  );
+  // Set various pieces of information about the post type
+  $args = array(
+	'labels'            => $labels,
+	'description'       => 'Holds our movies and movie specific data',
+	'public'            => true,
+	'menu_position'     => 5,
+	'supports'          => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
+	'has_archive'       => true,
+	'show_in_admin_bar' => true,
+	'show_in_nav_menus' => true,
+	'has_archive'       => true,
+	'query_var'         => 'film',
+	'taxonomies'        => array( 'category','location' ),
+  );
+  // Register the beneficio post type with all the information contained in the $arguments array
+  register_post_type( 'beneficio', $args );
 }
