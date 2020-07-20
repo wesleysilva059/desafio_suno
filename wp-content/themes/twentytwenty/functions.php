@@ -781,6 +781,8 @@ function create_locations() {
   ));
 }
 
+add_theme_support('post-formats', array('image'));
+add_post_type_support('beneficio','post-formats');
 
 // The custom function MUST be hooked to the init action hook
 add_action( 'init', 'lc_register_beneficio_post_type' );
@@ -791,14 +793,14 @@ function lc_register_beneficio_post_type() {
 	'name'               => __( 'Benefícios' ),
 	'singular_name'      => __( 'Benefício' ),
 	'add_new'            => __( 'Adicionar Novo' ),
-	'add_new_item'       => __( 'Add New Benefício' ),
-	'edit_item'          => __( 'Edit Benefício' ),
-	'new_item'           => __( 'New Benefício' ),
+	'add_new_item'       => __( 'Adicionar Novo Benefício' ),
+	'edit_item'          => __( 'Editar Benefício' ),
+	'new_item'           => __( 'Novo Benefício' ),
 	'all_items'          => __( 'Todos os Benefícios' ),
-	'view_item'          => __( 'View Benefício' ),
-	'search_items'       => __( 'Search Benefícios' ),
-	'featured_image'     => 'Poster',
-	'set_featured_image' => 'Add Poster'
+	'view_item'          => __( 'Visualizar Benefício' ),
+	'search_items'       => __( 'Buscar Benefícios' ),
+	'featured_image'     => 'Logotipo',
+	'set_featured_image' => 'Adicionar Logotipo'
   );
   // Set various pieces of information about the post type
   $args = array(
@@ -806,7 +808,8 @@ function lc_register_beneficio_post_type() {
 	'description'       => 'Holds our movies and movie specific data',
 	'public'            => true,
 	'menu_position'     => 5,
-	'supports'          => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields' ),
+	'register_meta_box_cb' => 'noticias_meta_box',
+	'supports'          => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments', 'custom-fields','image' ),
 	'has_archive'       => true,
 	'show_in_admin_bar' => true,
 	'show_in_nav_menus' => true,
@@ -816,4 +819,24 @@ function lc_register_beneficio_post_type() {
   );
   // Register the beneficio post type with all the information contained in the $arguments array
   register_post_type( 'beneficio', $args );
+}
+
+function noticias_meta_box(){
+	add_meta_box('meta_box_test', __('Meta Box'), 'meta_box_meta_test', 'beneficio', 'side', 'high');
+}
+
+function meta_box_meta_test(){
+	global $post;
+	$metaBoxValor = get_post_meta($post->ID, 'valor_meta', true); 
+	?>        
+		<label for="inputValorMeta">Valor: </label>
+		<input type="text" name="valor_meta" id="inputValorMeta" value="<?php echo $metaBoxValor; ?>" />
+	<?php
+	}
+
+add_action('save_post', 'save_noticias_post');
+
+function save_noticias_post(){
+	global $post;        
+		update_post_meta($post->ID, 'valor_meta', $_POST['valor_meta']);
 }
