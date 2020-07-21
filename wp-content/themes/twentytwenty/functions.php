@@ -822,7 +822,7 @@ function lc_register_beneficio_post_type() {
 }
 
 function noticias_meta_box(){
-	add_meta_box('meta_box_test', __('Meta Box'), 'meta_box_meta_test', 'beneficio', 'side', 'high');
+	add_meta_box('meta_box_test', __('Meta Box'), 'meta_box_meta_test', 'beneficio', 'normal', 'high');
 }
 
 function meta_box_meta_test(){
@@ -832,11 +832,67 @@ function meta_box_meta_test(){
 		<label for="inputValorMeta">Valor: </label>
 		<input type="text" name="valor_meta" id="inputValorMeta" value="<?php echo $metaBoxValor; ?>" />
 	<?php
+	wp_nonce_field(plugin_basename(__FILE__), 'wp_custom_attachment_nonce');
+     
+	$html = '<p class="description">';
+		 $html .= 'Upload your PDF here.';
+	$html .= '</p>';
+	$html .= '<input type="file" id="wp_custom_attachment" name="wp_custom_attachment" value="" size="25" />';
+	 
+	echo $html;
 	}
 
 add_action('save_post', 'save_noticias_post');
 
-function save_noticias_post(){
+function save_noticias_post($id){
 	global $post;        
 		update_post_meta($post->ID, 'valor_meta', $_POST['valor_meta']);
+		/* --- security verification --- */
+		if(!wp_verify_nonce($_POST['wp_custom_attachment_nonce'], plugin_basename(__FILE__))) {
+			return $id;
+		 } // end if
+			 
+		 if(defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+			return $id;
+		 } // end if
+			 
+		 if('page' == $_POST['post_type']) {
+			if(!current_user_can('edit_page', $id)) {
+			  return $id;
+			} // end if
+		 } else {
+			  if(!current_user_can('edit_page', $id)) {
+					return $id;
+			  } // end if
+		 } // end if
+		 /* - end security verification - */
+		  
+		 // Make sure the file array isn't empty
+		 if(!empty($_FILES['wp_custom_attachment']['name'])) {
+				
+			  // Setup the array of supported file types. In this case, it's just PDF.
+			  $supported_types = array('application/pdf');
+				
+			  // Get the file type of the upload
+			  $arr_file_type = wp_check_filetype(basename($_FILES['wp_custom_attachment']['name']));
+			  $uploaded_type = $arr_file_type['type'];
+				
+			  // Check if the type is supported. If not, throw an error.
+			  if(in_array($uploaded_type, $supported_types)) {
+	 
+					// Use the WordPress API to upload the file
+					$upload = wp_upload_bits($_FILES['wp_custom_attachment']['name'], null, file_get_contents($_FILES['wp_custom_attachment']['tmp_name']));
+		  
+					if(isset($upload['error']) && $upload['error'] != 0) {
+						 wp_die('There was an error uploading your file. The error is: ' . $upload['error']);
+					} else {
+						 add_post_meta($id, 'wp_custom_attachment', $upload);
+						 update_post_meta($id, 'wp_custom_attachment', $upload);     
+					} // end if/else
+	 
+			  } else {
+					wp_die("The file type that you've uploaded is not a PDF.");
+			  } // end if/else
+				
+		 } // 
 }
